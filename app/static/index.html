@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NCS Downloader - Apple Music & Open License Audio Downloader</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Header / Navigation -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <i class="fa-solid fa-music text-slate-950 text-xl font-bold"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight tracking-tight text-white">NCS Downloader</h1>
+          <p class="text-xs text-slate-400">Apple Music to Open-License Audio</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span> CasaOS Ready
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Input Card -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div class="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-brand-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="max-w-3xl space-y-4">
+        <div>
+          <h2 class="text-xl font-semibold text-white">Import Apple Music Tracks</h2>
+          <p class="text-sm text-slate-400 mt-1">Paste a public Apple Music playlist, album, or track URL to extract metadata and download open-license audio.</p>
+        </div>
+
+        <form id="extract-form" class="space-y-4">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <i class="fa-solid fa-link"></i>
+              </div>
+              <input type="url" id="apple-url" required
+                placeholder="https://music.apple.com/us/playlist/ncs-releases/pl.u-..."
+                class="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm placeholder-slate-500 transition-all text-white outline-none">
+            </div>
+            <button type="submit" id="btn-extract"
+              class="px-6 py-3 bg-brand-600 hover:bg-brand-500 text-slate-950 font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Extract</span>
+            </button>
+          </div>
+
+          <!-- Options -->
+          <div class="flex flex-wrap items-center gap-4 pt-2">
+            <div class="flex items-center space-x-2">
+              <label for="search-suffix" class="text-xs font-medium text-slate-400">Search Query Suffix:</label>
+              <input type="text" id="search-suffix" value="NCS audio"
+                class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:ring-1 focus:ring-brand-500 outline-none w-36">
+            </div>
+            <div class="text-xs text-slate-400 flex items-center space-x-1">
+              <i class="fa-solid fa-circle-info text-slate-500"></i>
+              <span>Target Audio Quality: <strong class="text-brand-400 font-medium">320 Kbps MP3</strong></span>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="hidden bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-rose-400 text-sm flex items-start space-x-3">
+      <i class="fa-solid fa-triangle-exclamation text-rose-500 mt-0.5"></i>
+      <span id="error-msg">An error occurred while fetching the URL.</span>
+    </div>
+
+    <!-- Extraction Results Section -->
+    <section id="results-section" class="hidden space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-brand-500" id="collection-type">Playlist</span>
+          <h3 class="text-lg font-bold text-white" id="collection-title">Collection Title</h3>
+          <p class="text-xs text-slate-400 mt-0.5"><span id="selected-count">0</span> of <span id="total-count">0</span> tracks selected</p>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <button id="btn-select-all" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors">
+            Select All
+          </button>
+
+          <button id="btn-download-selected" disabled
+            class="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-slate-950 font-semibold text-sm rounded-xl transition-all shadow-lg shadow-brand-600/20 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-download"></i>
+            <span>Download Selected</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tracks Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-950/50 text-slate-400 border-b border-slate-800 text-xs uppercase tracking-wider">
+              <tr>
+                <th class="py-3 px-4 w-10 text-center">
+                  <input type="checkbox" id="check-all" class="rounded bg-slate-900 border-slate-700 text-brand-600 focus:ring-brand-500">
+                </th>
+                <th class="py-3 px-4">#</th>
+                <th class="py-3 px-4">Title</th>
+                <th class="py-3 px-4">Artist</th>
+                <th class="py-3 px-4 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tracks-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Downloads / Queue Section -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-list-check text-brand-500"></i>
+          <span>Download Queue & Status</span>
+        </h3>
+        <span id="queue-badge" class="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded-full font-medium">0 Tasks</span>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3" id="queue-list-container">
+        <div id="queue-empty-msg" class="py-8 text-center text-slate-500 text-sm">
+          No active or completed downloads in queue. Extract a playlist above to get started.
+        </div>
+        <div id="queue-items" class="space-y-3">
+          <!-- Dynamically populated via SSE -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-slate-950 py-6 mt-12 text-center text-xs text-slate-500">
+    <p>NCS Downloader &bull; Designed for CasaOS on Ubuntu 26 &bull; Saves files directly to <code class="text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded">/downloads</code></p>
+  </footer>
+
+  <!-- App Script -->
+  <script>
+    let currentTracks = [];
+    let downloadQueueState = {};
+
+    const extractForm = document.getElementById('extract-form');
+    const appleUrlInput = document.getElementById('apple-url');
+    const searchSuffixInput = document.getElementById('search-suffix');
+    const btnExtract = document.getElementById('btn-extract');
+    const errorBanner = document.getElementById('error-banner');
+    const errorMsg = document.getElementById('error-msg');
+
+    const resultsSection = document.getElementById('results-section');
+    const collectionType = document.getElementById('collection-type');
+    const collectionTitle = document.getElementById('collection-title');
+    const selectedCount = document.getElementById('selected-count');
+    const totalCount = document.getElementById('total-count');
+    const checkAll = document.getElementById('check-all');
+    const btnSelectAll = document.getElementById('btn-select-all');
+    const btnDownloadSelected = document.getElementById('btn-download-selected');
+    const tracksTableBody = document.getElementById('tracks-table-body');
+
+    const queueEmptyMsg = document.getElementById('queue-empty-msg');
+    const queueItemsContainer = document.getElementById('queue-items');
+    const queueBadge = document.getElementById('queue-badge');
+
+    // Extract Playlist Event Handler
+    extractForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+      const url = appleUrlInput.value.trim();
+      if (!url) return;
+
+      btnExtract.disabled = true;
+      btnExtract.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Extracting...</span>';
+
+      try {
+        const response = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        const resData = await response.json();
+        if (!response.ok || !resData.success) {
+          throw new Error(resData.detail || 'Failed to extract Apple Music metadata.');
+        }
+
+        renderCollection(resData.data);
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btnExtract.disabled = false;
+        btnExtract.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i><span>Extract</span>';
+      }
+    });
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorBanner.classList.remove('hidden');
+    }
+
+    function hideError() {
+      errorBanner.classList.add('hidden');
+    }
+
+    function renderCollection(data) {
+      currentTracks = data.tracks || [];
+      collectionTitle.textContent = data.title || 'Apple Music Collection';
+      collectionType.textContent = (data.type || 'Collection').toUpperCase();
+      totalCount.textContent = currentTracks.length;
+
+      tracksTableBody.innerHTML = '';
+
+      if (currentTracks.length === 0) {
+        tracksTableBody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No tracks found at this URL.</td></tr>`;
+      } else {
+        currentTracks.forEach((track, index) => {
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-slate-800/40 transition-colors';
+          row.innerHTML = `
+            <td class="py-3 px-4 text-center">
+              <input type="checkbox" class="track-checkbox rounded bg-slate-900 border-slate-700 text-brand-600 focus:ring-brand-500" data-index="${index}" checked>
+            </td>
+            <td class="py-3 px-4 text-slate-500 text-xs font-mono">${index + 1}</td>
+            <td class="py-3 px-4 font-medium text-white">${escapeHtml(track.title)}</td>
+            <td class="py-3 px-4 text-slate-400">${escapeHtml(track.artist)}</td>
+            <td class="py-3 px-4 text-right" id="track-status-${track.id}">
+              <span class="text-xs text-slate-500">Ready</span>
+            </td>
+          `;
+          tracksTableBody.appendChild(row);
+        });
+      }
+
+      checkAll.checked = true;
+      updateSelectionCount();
+      resultsSection.classList.remove('hidden');
+
+      // Checkbox event listeners
+      document.querySelectorAll('.track-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateSelectionCount);
+      });
+    }
+
+    checkAll.addEventListener('change', (e) => {
+      document.querySelectorAll('.track-checkbox').forEach(cb => {
+        cb.checked = e.target.checked;
+      });
+      updateSelectionCount();
+    });
+
+    btnSelectAll.addEventListener('click', () => {
+      const allChecked = Array.from(document.querySelectorAll('.track-checkbox')).every(cb => cb.checked);
+      document.querySelectorAll('.track-checkbox').forEach(cb => cb.checked = !allChecked);
+      checkAll.checked = !allChecked;
+      updateSelectionCount();
+    });
+
+    function updateSelectionCount() {
+      const selected = document.querySelectorAll('.track-checkbox:checked').length;
+      selectedCount.textContent = selected;
+      btnDownloadSelected.disabled = selected === 0;
+    }
+
+    // Download Selected Tracks Handler
+    btnDownloadSelected.addEventListener('click', async () => {
+      const selectedIndexes = Array.from(document.querySelectorAll('.track-checkbox:checked'))
+        .map(cb => parseInt(cb.getAttribute('data-index')));
+
+      const tracksToDownload = selectedIndexes.map(idx => currentTracks[idx]);
+      if (tracksToDownload.length === 0) return;
+
+      const searchSuffix = searchSuffixInput.value.trim() || 'NCS audio';
+
+      btnDownloadSelected.disabled = true;
+      btnDownloadSelected.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Queueing...</span>';
+
+      try {
+        const response = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tracks: tracksToDownload,
+            search_suffix: searchSuffix
+          })
+        });
+
+        const resData = await response.json();
+        if (!response.ok || !resData.success) {
+          throw new Error(resData.detail || 'Failed to queue tracks for download.');
+        }
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btnDownloadSelected.disabled = false;
+        btnDownloadSelected.innerHTML = '<i class="fa-solid fa-download"></i><span>Download Selected</span>';
+      }
+    });
+
+    // Server-Sent Events (SSE) setup for Real-Time Updates
+    function initSSE() {
+      const eventSource = new EventSource('/api/events');
+
+      eventSource.addEventListener('initial', (e) => {
+        const items = JSON.parse(e.data);
+        items.forEach(item => { downloadQueueState[item.id] = item; });
+        renderQueue();
+      });
+
+      eventSource.addEventListener('update', (e) => {
+        const item = JSON.parse(e.data);
+        downloadQueueState[item.id] = item;
+        renderQueue();
+        updateTrackStatusInTable(item);
+      });
+
+      eventSource.onerror = () => {
+        console.warn('SSE connection lost. Reconnecting...');
+      };
+    }
+
+    function updateTrackStatusInTable(item) {
+      const cell = document.getElementById(`track-status-${item.id}`);
+      if (!cell) return;
+
+      if (item.status === 'downloading') {
+        cell.innerHTML = `<span class="text-xs font-semibold text-brand-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>${item.progress}%</span>`;
+      } else if (item.status === 'converting') {
+        cell.innerHTML = `<span class="text-xs font-semibold text-amber-400"><i class="fa-solid fa-gear fa-spin mr-1"></i>Converting...</span>`;
+      } else if (item.status === 'completed') {
+        cell.innerHTML = `<span class="text-xs font-medium text-emerald-400"><i class="fa-solid fa-check mr-1"></i>Downloaded</span>`;
+      } else if (item.status === 'error') {
+        cell.innerHTML = `<span class="text-xs font-medium text-rose-400"><i class="fa-solid fa-xmark mr-1"></i>Failed</span>`;
+      }
+    }
+
+    function renderQueue() {
+      const items = Object.values(downloadQueueState);
+      queueBadge.textContent = `${items.length} ${items.length === 1 ? 'Task' : 'Tasks'}`;
+
+      if (items.length === 0) {
+        queueEmptyMsg.classList.remove('hidden');
+        queueItemsContainer.innerHTML = '';
+        return;
+      }
+
+      queueEmptyMsg.classList.add('hidden');
+      queueItemsContainer.innerHTML = '';
+
+      items.reverse().forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2';
+
+        let statusBadge = '';
+        if (item.status === 'pending') {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-400"><i class="fa-solid fa-clock mr-1"></i>Pending</span>`;
+        } else if (item.status === 'downloading') {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium bg-brand-500/10 text-brand-400 border border-brand-500/20"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Downloading (${item.progress}%)</span>`;
+        } else if (item.status === 'converting') {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-gear fa-spin mr-1"></i>Converting MP3 320k</span>`;
+        } else if (item.status === 'completed') {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1"></i>Completed</span>`;
+        } else if (item.status === 'error') {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20"><i class="fa-solid fa-circle-xmark mr-1"></i>Failed</span>`;
+        }
+
+        // Quality badge note if below 320kbps
+        let qualityNote = '';
+        if (item.status === 'completed') {
+          if (item.is_below_320kbps && item.bitrate) {
+            qualityNote = `<span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded" title="Original source audio was only available at ${item.bitrate}kbps"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Source ${item.bitrate} kbps</span>`;
+          } else {
+            qualityNote = `<span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded"><i class="fa-solid fa-sliders mr-1"></i>320 kbps MP3</span>`;
+          }
+        }
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h4 class="font-semibold text-white text-sm">${escapeHtml(item.title)}</h4>
+              <p class="text-xs text-slate-400">${escapeHtml(item.artist)} &bull; Query: <span class="text-slate-300">"${escapeHtml(item.title)} ${escapeHtml(item.artist)} ${escapeHtml(item.search_suffix)}"</span></p>
+            </div>
+            <div class="flex items-center space-x-2">
+              ${qualityNote}
+              ${statusBadge}
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-gradient-to-r from-brand-600 to-emerald-400 h-1.5 transition-all duration-300" style="width: ${item.progress}%"></div>
+          </div>
+
+          ${item.error_message ? `<p class="text-xs text-rose-400 bg-rose-950/30 p-2 rounded border border-rose-900/40">${escapeHtml(item.error_message)}</p>` : ''}
+          ${item.filename ? `<p class="text-xs text-slate-500 font-mono"><i class="fa-solid fa-file-audio mr-1"></i>Saved to /downloads/${escapeHtml(item.filename)}</p>` : ''}
+        `;
+
+        queueItemsContainer.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // Initialize EventSource on load
+    initSSE();
+  </script>
+</body>
+</html>
