@@ -36,91 +36,103 @@
 
 ## 🛠️ Step-by-Step CasaOS Deployment Guide
 
-Follow these steps to deploy NCS Downloader on your CasaOS server:
+Follow these steps to deploy NCS Downloader on your CasaOS server.
 
-### Prerequisites
-* A running **CasaOS** installation (e.g., on Ubuntu 26).
-* The target music folder exists on your host system:
-  ```bash
-  sudo mkdir -p /DATA/Media/Music
-  sudo chmod -R 777 /DATA/Media/Music
-  ```
+> ⚠️ **Note regarding "No such image" error:**
+> CasaOS imports attempt to pull images directly from Docker Hub unless the image is already built locally on the host system. **Step 1 below builds the image locally first to prevent this issue.**
 
 ---
 
-### Method 1: Deploying via CasaOS Web Dashboard (Recommended)
+### Step 1: Clone the Repository & Build the Docker Image on CasaOS Host
 
-1. **Log in to CasaOS Web UI** (usually `http://<your-server-ip>`).
-2. Click the **`+` (Install Custom App)** button on the top left of the CasaOS main dashboard.
-3. In the top right corner of the app installation window, click **`Import`**.
+Open terminal / SSH into your CasaOS (Ubuntu 26) server and run:
+
+```bash
+# 1. Create directory and clone repository
+sudo mkdir -p /DATA/AppData/ncs-downloader
+cd /DATA/AppData/ncs-downloader
+
+# Copy/clone the project files into this folder
+
+# 2. Ensure target music directory exists on host
+sudo mkdir -p /DATA/Media/Music
+sudo chmod -R 777 /DATA/Media/Music
+
+# 3. Build the Docker image locally
+docker build -t ncs-downloader:latest .
+```
+
+---
+
+### Step 2: Option A — Deploying via Command Line (Quickest)
+
+Once the image is built in Step 1, simply start the container:
+
+```bash
+docker compose up -d
+```
+
+Check status:
+```bash
+docker ps | grep ncs-downloader
+```
+
+Open your web browser and go to `http://<your-casaos-ip>:8080`.
+
+---
+
+### Step 2: Option B — Deploying via CasaOS Dashboard (Custom App)
+
+If you prefer having the **NCS Downloader tile on your CasaOS Dashboard**:
+
+1. Log in to **CasaOS Web UI** (`http://<your-server-ip>`).
+2. Click the **`+` (Install Custom App)** button on the top left of the CasaOS dashboard.
+3. Click **`Import`** in the top right corner.
 4. Select **`Docker Compose`**.
 5. Paste the complete contents of `docker-compose.yml`:
 
-   ```yaml
-   version: '3.8'
+```yaml
+version: '3.8'
 
-   services:
-     ncs-downloader:
-       build:
-         context: .
-         dockerfile: Dockerfile
-       image: ncs-downloader:latest
-       container_name: ncs-downloader
-       restart: unless-stopped
-       ports:
-         - "8080:8080"
-       volumes:
-         - /DATA/Media/Music:/downloads
-       environment:
-         - DOWNLOAD_DIR=/downloads
-         - TZ=UTC
+services:
+  ncs-downloader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ncs-downloader:latest
+    container_name: ncs-downloader
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /DATA/Media/Music:/downloads
+    environment:
+      - DOWNLOAD_DIR=/downloads
+      - TZ=UTC
 
-   x-casaos:
-     architectures:
-       - amd64
-       - arm64
-       - arm
-     main: ncs-downloader
-     description:
-       en_us: "Extract Apple Music tracks and search, download, and convert open-license/NCS audio directly to your local media directory in 320kbps MP3 format."
-     tagline:
-       en_us: "Apple Music Open-License & NCS Audio Downloader"
-     developer: "NCS Downloader Team"
-     author: "NCS Downloader"
-     icon: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/music.png"
-     thumbnail: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/music.png"
-     title:
-       en_us: "NCS Downloader"
-     category: "Music"
-     port_map: "8080"
-     index: /
-   ```
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+    - arm
+  main: ncs-downloader
+  description:
+    en_us: "Extract Apple Music tracks and search, download, and convert open-license/NCS audio directly to your local media directory in 320kbps MP3 format."
+  tagline:
+    en_us: "Apple Music Open-License & NCS Audio Downloader"
+  developer: "NCS Downloader Team"
+  author: "NCS Downloader"
+  icon: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/music.png"
+  thumbnail: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/music.png"
+  title:
+    en_us: "NCS Downloader"
+  category: "Music"
+  port_map: "8080"
+  index: /
+```
 
 6. Click **Submit** / **Install**.
-7. CasaOS will automatically create the application tile named **NCS Downloader** on your dashboard with its icon.
-
----
-
-### Method 2: Deploying via Command Line (Terminal)
-
-1. **Clone or copy the application files** to your CasaOS host:
-   ```bash
-   git clone <repository-url> /DATA/AppData/ncs-downloader
-   cd /DATA/AppData/ncs-downloader
-   ```
-
-2. **Build and start the container**:
-   ```bash
-   docker compose up -d --build
-   ```
-
-3. **Verify the container is running**:
-   ```bash
-   docker ps | grep ncs-downloader
-   ```
-
-4. **Access the application**:
-   Open your browser and navigate to `http://<your-casaos-ip>:8080`.
+7. CasaOS will link the app tile on your main dashboard!
 
 ---
 
