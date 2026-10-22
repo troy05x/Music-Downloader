@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  ncs-downloader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ncs-downloader:latest
+    container_name: ncs-downloader
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /DATA/Media/Music:/downloads
+    environment:
+      - DOWNLOAD_DIR=/downloads
+      - TZ=UTC
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+    - arm
+  main: ncs-downloader
+  description:
+    en_us: "Extract Apple Music tracks and search, download, and convert open-license/NCS audio directly to your local media directory in 320kbps MP3 format."
+  tagline:
+    en_us: "Apple Music Open-License & NCS Audio Downloader"
+  developer: "NCS Downloader Team"
+  author: "NCS Downloader"
+  icon: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/music.png"
+  thumbnail: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/music.png"
+  title:
+    en_us: "NCS Downloader"
+  category: "Music"
+  port_map: "8080"
+  index: /
